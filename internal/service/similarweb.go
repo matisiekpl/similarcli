@@ -58,7 +58,6 @@ func (s *similarWebService) Print(domain string) error {
 		return fmt.Errorf("site %s not found", domain)
 	}
 
-	// Create table for basic information
 	basicTable := tablewriter.NewWriter(os.Stdout)
 	basicTable.SetAutoWrapText(false)
 	basicTable.SetAutoFormatHeaders(true)
@@ -78,18 +77,15 @@ func (s *similarWebService) Print(domain string) error {
 	basicTable.Append([]string{"Category", website.Category})
 	basicTable.Render()
 
-	// Create table for monthly visits
 	visitsTable := tablewriter.NewWriter(os.Stdout)
 	fmt.Println()
 
-	// Sort months chronologically
 	var months []string
 	for month := range website.EstimatedMonthlyVisits {
 		months = append(months, month)
 	}
 	sort.Strings(months)
 
-	// Prepare headers and data for horizontal display
 	headers := []string{"Date"}
 	visits := []string{"Visits"}
 
@@ -115,11 +111,9 @@ func (s *similarWebService) Print(domain string) error {
 	visitsTable.Append(visits)
 	visitsTable.Render()
 
-	// Create table for traffic sources
 	trafficTable := tablewriter.NewWriter(os.Stdout)
 	fmt.Println()
 
-	// Prepare headers and data for traffic sources
 	trafficHeaders := []string{"Source"}
 	trafficValues := []string{"Percentage"}
 
@@ -135,7 +129,6 @@ func (s *similarWebService) Print(domain string) error {
 		{"Paid Referrals", website.TrafficSources.PaidReferrals},
 	}
 
-	// Sort sources by value in descending order
 	sort.Slice(sources, func(i, j int) bool {
 		return sources[i].value > sources[j].value
 	})
