@@ -54,6 +54,10 @@ func (s *similarWebService) Print(domain string) error {
 		return fmt.Errorf("%w", err)
 	}
 
+	if website.Title == "" {
+		return fmt.Errorf("site %s not found", domain)
+	}
+
 	// Create table for basic information
 	basicTable := tablewriter.NewWriter(os.Stdout)
 	basicTable.SetAutoWrapText(false)

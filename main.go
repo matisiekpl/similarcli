@@ -20,13 +20,18 @@ func main() {
 		Usage:     "CLI tool for fetching website analytics from SimilarWeb",
 		UsageText: "similarcli [command options] DOMAIN",
 		ArgsUsage: "DOMAIN",
+		Authors: []*cli.Author{
+			{
+				Name: "Mateusz Woźniak",
+			},
+		},
 		Action: func(c *cli.Context) error {
 			if c.NArg() == 0 {
 				cli.ShowAppHelp(c)
 				return nil
 			}
 			if c.NArg() != 1 {
-				return fmt.Errorf("domain argument is required")
+				return fmt.Errorf("only domain argument is required")
 			}
 			similarWebService := service.NewSimilarWebService()
 			return similarWebService.Print(c.Args().First())
