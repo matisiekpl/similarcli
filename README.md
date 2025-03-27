@@ -2,13 +2,7 @@
 
 A powerful command-line tool for fetching website analytics from SimilarWeb. Get instant insights about any website's traffic, engagement, and more! 🚀
 
-## Features ✨
-
-- 📊 Basic website information (title, description, category)
-- 📈 Monthly visits with human-readable numbers (K, M)
-- 🎯 Traffic sources breakdown
-- 🎨 Clean and modern table output
-- ⚡ Fast and efficient
+![SimilarCLI](similarcli.png)
 
 ## Installation 🛠️
 
