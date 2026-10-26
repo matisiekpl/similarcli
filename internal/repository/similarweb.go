@@ -45,6 +45,10 @@ func (r *similarWebRepository) Load(ctx context.Context, address string) (dto.We
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusForbidden {
+		return dto.Website{}, fmt.Errorf("SimilarWeb rate limit reached, try again in a few minutes")
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return dto.Website{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}

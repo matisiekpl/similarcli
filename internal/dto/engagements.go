@@ -10,10 +10,14 @@ type Engagments struct {
 }
 
 type TrafficSources struct {
-	Social        float64 `json:"Social"`
-	PaidReferrals float64 `json:"Paid Referrals"`
+	SocialOrganic float64 `json:"SocialOrganic"`
+	SocialPaid    float64 `json:"SocialPaid"`
 	Mail          float64 `json:"Mail"`
 	Referrals     float64 `json:"Referrals"`
-	Search        float64 `json:"Search"`
+	SearchOrganic float64 `json:"SearchOrganic"`
+	SearchPaid    float64 `json:"SearchPaid"`
 	Direct        float64 `json:"Direct"`
+	GenAi         float64 `json:"GenAi"`
+	Affiliate     float64 `json:"Affiliate"`
+	DisplayAds    float64 `json:"DisplayAds"`
 }

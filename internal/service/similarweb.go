@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/matisiekpl/similarcli/internal/repository"
@@ -17,11 +18,13 @@ type SimilarWebService interface {
 
 type similarWebService struct {
 	similarWebRepository repository.SimilarWebRepository
+	rdapRepository       repository.RdapRepository
 }
 
 func NewSimilarWebService() SimilarWebService {
 	return &similarWebService{
 		similarWebRepository: repository.NewSimilarWebRepository(),
+		rdapRepository:       repository.NewRdapRepository(),
 	}
 }
 
@@ -33,15 +36,27 @@ func formatDate(dateStr string) string {
 	return t.Format("January 2006")
 }
 
-func formatNumber(num int) string {
-	switch {
-	case num >= 1000000:
-		return fmt.Sprintf("%.1fM", float64(num)/1000000)
-	case num >= 1000:
-		return fmt.Sprintf("%.1fK", float64(num)/1000)
-	default:
-		return fmt.Sprintf("%d", num)
+func formatNumber(number int) string {
+	digits := strconv.Itoa(number)
+	for index := len(digits) - 3; index > 0; index -= 3 {
+		digits = digits[:index] + "," + digits[index:]
 	}
+	return digits
+}
+
+func formatAge(date time.Time) string {
+	days := int(time.Since(date).Hours() / 24)
+	value, unit := days, "day"
+	switch {
+	case days >= 365:
+		value, unit = days/365, "year"
+	case days >= 30:
+		value, unit = days/30, "month"
+	}
+	if value != 1 {
+		unit += "s"
+	}
+	return fmt.Sprintf("%d %s ago", value, unit)
 }
 
 func formatPercentage(value float64) string {
@@ -54,7 +69,7 @@ func (s *similarWebService) Print(domain string) error {
 		return fmt.Errorf("%w", err)
 	}
 
-	if website.Title == "" {
+	if website.SiteName == "" {
 		return fmt.Errorf("site %s not found", domain)
 	}
 
@@ -75,6 +90,14 @@ func (s *similarWebService) Print(domain string) error {
 	basicTable.Append([]string{"Title", website.Title})
 	basicTable.Append([]string{"Description", website.Description})
 	basicTable.Append([]string{"Category", website.Category})
+	rdapDomain, err := s.rdapRepository.Load(context.Background(), domain)
+	if err == nil {
+		for _, event := range rdapDomain.Events {
+			if event.EventAction == "registration" {
+				basicTable.Append([]string{"Registered", fmt.Sprintf("%s (%s)", event.EventDate.Format("2 January 2006"), formatAge(event.EventDate))})
+			}
+		}
+	}
 	basicTable.Render()
 
 	visitsTable := tablewriter.NewWriter(os.Stdout)
@@ -86,20 +109,11 @@ func (s *similarWebService) Print(domain string) error {
 	}
 	sort.Strings(months)
 
-	headers := []string{"Date"}
-	visits := []string{"Visits"}
-
-	for _, month := range months {
-		count := website.EstimatedMonthlyVisits[month]
-		headers = append(headers, formatDate(month))
-		visits = append(visits, formatNumber(count))
-	}
-
-	visitsTable.SetHeader(headers)
+	visitsTable.SetHeader([]string{"Date", "Visits"})
 	visitsTable.SetAutoWrapText(false)
 	visitsTable.SetAutoFormatHeaders(true)
 	visitsTable.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	visitsTable.SetAlignment(tablewriter.ALIGN_LEFT)
+	visitsTable.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_RIGHT})
 	visitsTable.SetCenterSeparator("")
 	visitsTable.SetColumnSeparator("")
 	visitsTable.SetRowSeparator("")
@@ -108,7 +122,9 @@ func (s *similarWebService) Print(domain string) error {
 	visitsTable.SetTablePadding("\t")
 	visitsTable.SetNoWhiteSpace(true)
 
-	visitsTable.Append(visits)
+	for _, month := range months {
+		visitsTable.Append([]string{formatDate(month), formatNumber(website.EstimatedMonthlyVisits[month])})
+	}
 	visitsTable.Render()
 
 	trafficTable := tablewriter.NewWriter(os.Stdout)
@@ -122,11 +138,15 @@ func (s *similarWebService) Print(domain string) error {
 		value float64
 	}{
 		{"Direct", website.TrafficSources.Direct},
-		{"Search", website.TrafficSources.Search},
-		{"Social", website.TrafficSources.Social},
+		{"Organic Search", website.TrafficSources.SearchOrganic},
+		{"Paid Search", website.TrafficSources.SearchPaid},
+		{"Organic Social", website.TrafficSources.SocialOrganic},
+		{"Paid Social", website.TrafficSources.SocialPaid},
 		{"Referrals", website.TrafficSources.Referrals},
 		{"Mail", website.TrafficSources.Mail},
-		{"Paid Referrals", website.TrafficSources.PaidReferrals},
+		{"GenAI", website.TrafficSources.GenAi},
+		{"Affiliate", website.TrafficSources.Affiliate},
+		{"Display Ads", website.TrafficSources.DisplayAds},
 	}
 
 	sort.Slice(sources, func(i, j int) bool {
