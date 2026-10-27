@@ -3,9 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/matisiekpl/similarcli/internal/repository"
@@ -13,7 +15,7 @@ import (
 )
 
 type SimilarWebService interface {
-	Print(domain string) error
+	Print(address string) error
 }
 
 type similarWebService struct {
@@ -63,7 +65,16 @@ func formatPercentage(value float64) string {
 	return fmt.Sprintf("%.1f%%", value*100)
 }
 
-func (s *similarWebService) Print(domain string) error {
+func (s *similarWebService) Print(address string) error {
+	if !strings.Contains(address, "://") {
+		address = "https://" + address
+	}
+	parsedAddress, err := url.Parse(address)
+	if err != nil {
+		return fmt.Errorf("invalid address %s: %w", address, err)
+	}
+	domain := parsedAddress.Hostname()
+
 	website, err := s.similarWebRepository.Load(context.Background(), domain)
 	if err != nil {
 		return fmt.Errorf("%w", err)
